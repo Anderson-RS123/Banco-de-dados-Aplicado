@@ -1,0 +1,193 @@
+Questao 1: A função no POSTGRESQL abaixo serve para:
+Resposta:   A) Somar dois valores inteiros e retornar um valor inteiro.
+
+Questao 2: O PostgreSQL permite criar funções para facilitar operações
+diárias e abstrair a complexidade na leitura e utilização dos códigos. Isto posto,
+analise a função a seguir:
+Resposta: C) retorna um número do tipo inteiro.
+
+
+
+Questao 3:
+
+create database sqlmagazine;
+
+create table clientes(
+	id serial primary key,
+	nome varchar(255),
+	saldo float
+);
+
+create table contas(
+	id serial primary key,
+	fkcliente int references clientes(id),
+	descricao varchar(255),
+	saldo float
+);
+
+create table movimentos(
+	id serial primary key,
+	fkconta int references contas(id),
+	historico varchar(255),
+	debito float,
+	credito float
+);
+
+
+insert into clientes(nome, saldo) values ('Adson', 3000);
+insert into clientes(nome, saldo) values ('Cecília', 600);
+insert into clientes(nome, saldo) values ('Marcela', 3450);
+insert into clientes(nome, saldo) values ('Thiago', 3440);
+insert into clientes(nome, saldo) values ('Alisson', 1560);
+insert into clientes(nome, saldo) values ('Max', 5000);
+select * from clientes;
+
+insert into contas(fkcliente, descricao, saldo) values(1, 'nada', 3000);
+insert into contas(fkcliente, descricao, saldo) values(2, 'tttda', 600);
+insert into contas(fkcliente, descricao, saldo) values(3, 'nsrva', 3450);
+insert into contas(fkcliente, descricao, saldo) values(4, 'narrta', 3440);
+insert into contas(fkcliente, descricao, saldo) values(5, 'nadecrvfa', 1560);
+insert into contas(fkcliente, descricao, saldo) values(6, 'a', 5000);
+select * from contas;
+
+insert into movimentos(fkconta, historico, debito, credito) values (7, 'cd j', 200, 5300);
+insert into movimentos(fkconta, historico, debito, credito) values (8, 'prbv', 500, 600);
+insert into movimentos(fkconta, historico, debito, credito) values (9, 'bmgndu', 677, 5300);
+insert into movimentos(fkconta, historico, debito, credito) values (10, 'cmiury', 2222, 4300);
+insert into movimentos(fkconta, historico, debito, credito) values (11, ' yfi', 2340, 5300);
+insert into movimentos(fkconta, historico, debito, credito) values (12, 'crvr', 0, 0);
+select * from movimentos;
+
+
+CREATE or replace FUNCTION incrementar(valor INTEGER)
+RETURNS INTEGER AS $$
+	begin 
+         return $1 + 1;
+	end; $$
+LANGUAGE 'plpgsql';
+select incrementar(4);
+
+
+CREATE FUNCTION ncontas(valor INTEGER)
+    RETURNS INT8 AS $$
+    begin
+      return (select COUNT(*) FROM contas
+         WHERE fkcliente = $1);
+        
+   end; $$
+    LANGUAGE 'plpgsql';
+   
+select ncontas(5);
+
+
+create function clientedesc(nome varchar(30), descricao varchar(30)) 
+	returns int8 as $$
+	begin
+		insert into clientes(nome) values($1);
+		insert into contas(fkcliente, descricao) values(currval('clientes_id_seq'), $2);
+		return (select currval('clientes_id_seq'));
+	end; $$
+	language 'plpgsql';
+
+select clientedesc('Silvio', 'semana04');	
+
+
+create function quemdeve() returns setof integer as $$
+	begin 
+		return query
+		select clientes.id from clientes
+		inner join contas on clientes.id = contas.fkcliente 
+		inner join 	movimentos on contas.id = movimentos.fkconta 
+		group by clientes.id
+		having sum(movimentos.credito - movimentos.debito) < 0;
+	end; $$
+	language 'plpgsql';
+	
+select quemdeve();
+
+
+create function devedores() returns setof clientes as $$
+	begin 
+		return query
+		select * from clientes where id in (
+		select clientes.id from clientes
+		inner join contas on clientes.id = contas.fkcliente 
+		inner join 	movimentos on contas.id = movimentos.fkconta 
+		group by clientes.id
+		having sum(movimentos.credito - movimentos.debito) < 0);
+	end; $$
+	language 'plpgsql';
+
+select devedores();
+select id, nome from devedores();
+
+create function maioresClientes(credito numeric(15,2)) returns setof clientes as $$
+	begin 
+		return query
+		select * from clientes where id in (
+		select clientes.id from clientes
+		inner join contas on clientes.id = contas.fkcliente 
+		inner join 	movimentos on contas.id = movimentos.fkconta 
+		group by clientes.id
+		having sum(movimentos.credito ) > $1);
+	end; $$
+	language 'plpgsql';
+
+select maioresClientes(3500);
+select id, nome from MaioresClientes (3500);
+
+
+SELECT proname, prosrc FROM pg_proc WHERE proname = 'devedores';
+
+CREATE FUNCTION select_dinamico (tabela text) RETURNS INTEGER as $$
+     DECLARE
+     vtabela alias for $1;
+     vSQL text;
+     BEGIN
+     vSQL := 'SELECT * FROM '  || vtabela ;
+     EXECUTE vSQL;
+     RETURN 1;
+     END; $$
+      LANGUAGE 'plpgsql';
+    
+select select_dinamico('clientes');
+
+
+create or replace function id_nome_cliente(ids integer) returns text as $$
+	declare 
+		r record;
+	begin
+		select into r* from clientes where id = $1;
+		if not FOUND then 
+		raise exception 'Cliente id $1 não encontrado ';
+		end if;
+		return r.nome;
+	end; $$
+	language 'plpgsql';
+
+select id_nome_cliente(3);
+
+	
+
+-- triggers
+create table teste(id int, nome text);
+create table teste2(id_teste int, nome text);
+
+insert into teste values(1, 'Nome');
+
+create or replace function ftr_ins_teste() returns trigger as $$
+	begin 
+		if new.id is not null then 
+			insert into teste2(id_teste, nome) values(new.id, new.nome);
+		end if;
+		return new;
+	end; $$
+	language 'plpgsql';
+
+create trigger tr_ins_teste after insert 
+	on teste for each row execute procedure ftr_ins_teste();
+select * from teste;	
+select * from teste2;
+
+
+
