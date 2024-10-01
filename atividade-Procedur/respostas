@@ -1,0 +1,213 @@
+--  exercicio 1
+CREATE TABLE pessoas (
+nome varchar(20),
+sobrenome varchar(40),
+idade smallint
+);
+
+create procedure inserir(in nome varchar(50), in sobrenome varchar(50),in idade int) 
+language 'plpgsql'
+as $$ 
+begin 
+	insert into pessoas(nome, sobrenome, idade) values(nome, sobrenome,idade);	
+end;
+$$;
+
+
+call inserir('Anderson', 'Menagassi', 20);
+select * from pessoas;
+
+
+-- exercicio 2
+
+Create TABLE produto (
+p_cod_produto INT,
+p_nome_produto VARCHAR(30),
+p_descricao TEXT,
+p_preco NUMERIC,
+p_qtde_estoque SMALLINT
+);
+
+
+create or replace procedure inserir_Produto(
+	in p_cod_produto int,
+	in p_nome_produto varchar(30),
+	in p_descricao text, 
+	in p_preco numeric, 
+	in p_qtde_estoque smallint)
+language  'plpgsql'
+as $$
+begin 
+	insert into produto(p_cod_produto, p_nome_produto, p_descricao, p_preco, p_qtde_estoque)
+	values (p_cod_produto, p_nome_produto, p_descricao, p_preco, p_qtde_estoque);
+end;
+$$;
+
+call inserir_Produto(3::int, 'Abacate'::varchar, 'Abacate maduro'::text, 13.4::numeric, 12::smallint);
+select * from produto;
+
+
+-- exercicio 3
+create or replace procedure atualiza_preco(in id int,in precoNovo numeric)
+language 'plpgsql'
+as $$
+begin
+	update produto
+	set p_preco = precoNovo
+	where p_cod_produto = id;
+end;
+$$;
+
+call atualiza_preco(3, 20);
+select * from produto;
+
+
+-- exercicio 4
+CREATE OR REPLACE PROCEDURE buscaProdutoPreco(IN quantidade INT)
+LANGUAGE 'plpgsql'
+AS $$
+DECLARE
+    produtos RECORD;
+BEGIN 
+    FOR produtos IN 
+        SELECT p_nome_produto, p_qtde_estoque
+        FROM produto 
+        WHERE p_qtde_estoque < quantidade
+    LOOP 
+        RAISE NOTICE 'Produto: %, Estoque: %', produtos.p_nome_produto, produtos.p_qtde_estoque;
+    END LOOP;
+END;
+$$;
+
+CALL buscaProdutoPreco(20);
+
+-- exercicio 5
+CREATE OR REPLACE PROCEDURE insere_atualiza (
+	cod int, 
+	prod varchar(30), 
+	descr text, 
+	valor numeric, 
+	qtde smallint, 
+	desc_perc numeric)
+LANGUAGE 'plpgsql'
+AS $$
+BEGIN
+	INSERT INTO produto(p_cod_produto, p_nome_produto, p_descricao, p_preco, p_qtde_estoque)
+	VALUES (cod, prod, descr, valor, qtde);
+	UPDATE produto SET p_preco = p_preco * (100 - desc_perc) / 100;
+END;
+$$;
+
+CALL insere_atualiza(6,'Limpa Contato'::varchar(30),'Detergente'::text, 12.30, 12::smallint, 10);
+
+select * from produto
+
+-- exercicio 6
+-- não possue função para analisar
+
+-- exercicio 7
+create table company2(
+	id int not null primary key,
+	name varchar(50), 
+	age int,
+	address varchar(50),
+	salary numeric);
+
+insert into company2(id, name, age, address, salary) values (1, 'Paul', 32, 'California', 20000);
+insert into company2(id, name, age, address, salary) values (2, 'Allen', 25, 'Texas', 15000);
+insert into company2(id, name, age, address, salary) values (3, 'Teddy', 23, 'Norway', 20000);
+insert into company2(id, name, age, address, salary) values (4, 'Mark', 25, 'Rich-Mond', 65000);
+insert into company2(id, name, age, address, salary) values (5, 'David', 28, 'Texas', 85000);
+insert into company2(id, name, age, address, salary) values (6, 'Kim', 22, 'South-Hall|', 45000);
+insert into company2(id, name, age, address, salary) values (7, 'James', 24, 'Houston', 10000);
+
+
+CREATE OR REPLACE FUNCTION totalRecords ()
+RETURNS integer AS $total$
+declare total integer;
+
+BEGIN
+	SELECT count(*) into total FROM company2;
+	RETURN total;
+END;
+$total$ 
+LANGUAGE 'plpgsql';
+
+select totalRecords();
+
+
+-- exercicio 8
+-- 		Podemos passar de diferentes formas os parâmetros de uma função no sql,
+--      podemos passar o nome da variavel, ou apenas o tipo da variável.
+
+
+-- exercicio 9
+CREATE TABLE departamentos (id serial primary key, descricao varchar);
+
+CREATE TABLE empregados(
+codigo serial,
+nome_emp text,
+salario int,
+departamento_cod int,
+PRIMARY KEY (codigo),
+FOREIGN KEY (departamento_cod) REFERENCES departamentos (id));
+
+INSERT INTO departamentos (descricao)
+VALUES 
+    ('Recursos Humanos'),
+    ('Financeiro'),
+    ('TI'),
+    ('Marketing');
+INSERT INTO empregados (nome_emp, salario, departamento_cod)
+VALUES 
+    ('João Silva', 3500, 1),  -- Recursos Humanos
+    ('Maria Souza', 4200, 2), -- Financeiro
+    ('Carlos Pereira', 5000, 3), -- TI
+    ('Ana Lima', 3100, 4),    -- Marketing
+    ('Paulo Gonçalves', 4500, 3), -- TI
+    ('Fernanda Alves', 2800, 1);  -- Recursos Humanos
+
+
+create or replace function busca_funcionario2(salarioTotal int)
+returns setof int
+as $$
+declare 
+	nomes record;
+begin 
+	for nomes in 
+		select nome_emp, salario  from empregados where salario > $1
+	loop 
+		return next nomes.salario;
+	end loop;
+	return;
+end;
+$$
+language 'plpgsql';
+
+
+-- drop function busca_funcionario2;
+select busca_funcionario2(3000);
+	
+
+
+
+
+
+------------   triegers   ---------------
+create table company(
+	id int primary key not null,
+	name text not null,
+	age int not null,
+	address char(50),
+	salary real
+);
+
+
+create table audit(
+	emp_id int not null,
+	entry_date text not null
+);
+
+
+create trigger example_trigger after insert on company
+for each row execute procedure auditlogfunc();
