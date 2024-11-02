@@ -1,0 +1,84 @@
+-- triggers
+-- exercicio 1
+-- ajustar o estoque de um produto
+CREATE TABLE produto(
+	cod_prod serial PRIMARY KEY,
+	descricao varchar(300),
+	qtd_disponivel int NOT null
+);
+
+create TABLE itensVenda(
+	cod_venda serial  PRIMARY KEY,
+	id_produto int,
+	qtd_vendida int
+);
+
+CREATE OR REPLACE FUNCTION atualizaEstoque()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE produto
+    SET qtd_disponivel = qtd_disponivel - NEW.qtd_vendida
+    WHERE cod_prod = NEW.id_produto;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
+
+CREATE TRIGGER atualizarEstoque
+AFTER INSERT ON itensVenda
+FOR EACH ROW
+EXECUTE FUNCTION atualizaEstoque();
+
+
+insert into produto values (1,'Banana', 10);
+insert into produto values (2,'Abacate', 1);
+insert into produto values (3,'Amora', 32);
+insert into produto values (4,'Jabuticaba', 11);
+
+
+insert into itensvenda values(1, 2, 1);
+insert into itensvenda values(2, 4, 4);
+insert into itensvenda values(3, 1, 3);
+
+select * from produto;
+
+
+
+
+-- exercicio 2
+-- fazar o backup de um usuario excluido
+create table tb_usuarios(
+	id serial primary key,
+	nome varchar(255),
+	senha int
+);
+
+create table tb_bkp_usuarios(
+	id int primary key,
+	nome varchar(255),
+	senha int
+);
+
+
+create or replace function faz_backup() returns trigger as $$
+begin 
+	insert into tb_bkp_usuarios(id,nome,senha) values (old.id, old.nome, old.senha); return old;
+end; $$
+language 'plpgsql';
+
+create or replace trigger fazer_backup
+after delete on tb_usuarios
+for each row execute function faz_backup();
+
+insert into tb_usuarios(id, nome, senha) values(1,'Abel', 444);
+insert into tb_usuarios(id, nome, senha) values(6,'Abel', 123);
+insert into tb_usuarios(id, nome, senha)  values(2,'Danilo', 12224);
+insert into tb_usuarios(id, nome, senha)  values(3,'Renato', 155);
+insert into tb_usuarios(id, nome, senha)  values(4,'Faustão', 4423);
+insert into tb_usuarios(id, nome, senha)  values(5,'Messi', 5423);
+
+delete from tb_usuarios where id = 6;
+delete from tb_usuarios where id = 3;
+
+select * from tb_usuarios;
+select * from tb_bkp_usuarios;
