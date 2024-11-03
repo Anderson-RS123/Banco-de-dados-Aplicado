@@ -1,0 +1,137 @@
+
+CREATE SEQUENCE public.fato_venda_sk_venda_seq;
+
+CREATE TABLE public.fato venda (
+                sk_venda INTEGER NOT NULL DEFAULT nextval('public.fato_venda_sk_venda_seq'),
+                numero_chassi CHAR(30) NOT NULL,
+                cd_loja CHAR(12) NOT NULL,
+                cpf CHAR(12) NOT NULL,
+                dt_compra DATE NOT NULL,
+                vl_compra NUMERIC(15,2) NOT NULL,
+                vl_imposto NUMERIC(15,2) NOT NULL,
+                vl_imposto_icms NUMERIC(15,2) NOT NULL,
+                CONSTRAINT sk_venda PRIMARY KEY (sk_venda)
+);
+
+
+ALTER SEQUENCE public.fato_venda_sk_venda_seq OWNED BY public.fato venda.sk_venda;
+
+CREATE SEQUENCE public.loja_ks_loja_seq;
+
+CREATE TABLE public.loja (
+                ks_loja INTEGER NOT NULL DEFAULT nextval('public.loja_ks_loja_seq'),
+                cd_loja CHAR(12) NOT NULL,
+                endereco_loja CHAR(100) NOT NULL,
+                cidade_loja CHAR(30) NOT NULL,
+                estado CHAR(2) NOT NULL,
+                pais CHAR(20) NOT NULL,
+                sk_venda INTEGER NOT NULL,
+                CONSTRAINT sk_loja PRIMARY KEY (ks_loja)
+);
+
+
+ALTER SEQUENCE public.loja_ks_loja_seq OWNED BY public.loja.ks_loja;
+
+CREATE SEQUENCE public.cliente_sk_cliente_seq;
+
+CREATE TABLE public.cliente (
+                sk_cliente INTEGER NOT NULL DEFAULT nextval('public.cliente_sk_cliente_seq'),
+                cpf CHAR(12) NOT NULL,
+                endereco CHAR(100) NOT NULL,
+                cidade CHAR(30) NOT NULL,
+                bairro CHAR(10) NOT NULL,
+                estado CHAR(2) NOT NULL,
+                pais CHAR(20) NOT NULL,
+                renda NUMERIC(15,2) NOT NULL,
+                sk_venda INTEGER NOT NULL,
+                CONSTRAINT sk_cliente PRIMARY KEY (sk_cliente)
+);
+
+
+ALTER SEQUENCE public.cliente_sk_cliente_seq OWNED BY public.cliente.sk_cliente;
+
+CREATE SEQUENCE public.financeira_sk_financeira_seq;
+
+CREATE TABLE public.financeira (
+                sk_financeira INTEGER NOT NULL DEFAULT nextval('public.financeira_sk_financeira_seq'),
+                cd_financeira CHAR(12) NOT NULL,
+                nome CHAR(30) NOT NULL,
+                endereco CHAR(100) NOT NULL,
+                bairro CHAR(100) NOT NULL,
+                estado CHAR(2) NOT NULL,
+                pais CHAR(20) NOT NULL,
+                sk_venda INTEGER NOT NULL,
+                CONSTRAINT sk_financeira PRIMARY KEY (sk_financeira)
+);
+
+
+ALTER SEQUENCE public.financeira_sk_financeira_seq OWNED BY public.financeira.sk_financeira;
+
+CREATE SEQUENCE public.financiamento_sk_financiamento_seq;
+
+CREATE TABLE public.financiamento (
+                sk_financiamento INTEGER NOT NULL DEFAULT nextval('public.financiamento_sk_financiamento_seq'),
+                cpf CHAR(12) NOT NULL,
+                cd_financeira CHAR(12) NOT NULL,
+                numero_chassi CHAR(30) NOT NULL,
+                cd_loja CHAR(12) NOT NULL,
+                vl_financiamento NUMERIC(15,2) NOT NULL,
+                taxa_juros NUMERIC(5,2) NOT NULL,
+                sk_venda INTEGER NOT NULL,
+                CONSTRAINT sk_financiamento PRIMARY KEY (sk_financiamento)
+);
+
+
+ALTER SEQUENCE public.financiamento_sk_financiamento_seq OWNED BY public.financiamento.sk_financiamento;
+
+CREATE SEQUENCE public.venda_veiculo_sk_veiculo_seq;
+
+CREATE TABLE public.venda_veiculo (
+                sk_veiculo INTEGER NOT NULL DEFAULT nextval('public.venda_veiculo_sk_veiculo_seq'),
+                numero_chassi CHAR(30) NOT NULL,
+                nome_carro CHAR(30) NOT NULL,
+                modelo_veiculo CHAR(30) NOT NULL,
+                dt_ini_fabricacao DATE NOT NULL,
+                dt_fim_fabricacao DATE NOT NULL,
+                cd_fabricante CHAR(12) NOT NULL,
+                sk_venda INTEGER NOT NULL,
+                CONSTRAINT sk_venda_veiculo PRIMARY KEY (sk_veiculo)
+);
+
+
+ALTER SEQUENCE public.venda_veiculo_sk_veiculo_seq OWNED BY public.venda_veiculo.sk_veiculo;
+
+ALTER TABLE public.financiamento ADD CONSTRAINT venda_financiamento_fk
+FOREIGN KEY (sk_venda)
+REFERENCES public.fato venda (sk_venda)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE public.financeira ADD CONSTRAINT venda_financeira_fk
+FOREIGN KEY (sk_venda)
+REFERENCES public.fato venda (sk_venda)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE public.cliente ADD CONSTRAINT venda_cliente_fk
+FOREIGN KEY (sk_venda)
+REFERENCES public.fato venda (sk_venda)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE public.venda_veiculo ADD CONSTRAINT venda_venda_veiculo_fk
+FOREIGN KEY (sk_venda)
+REFERENCES public.fato venda (sk_venda)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE public.loja ADD CONSTRAINT venda_loja_fk
+FOREIGN KEY (sk_venda)
+REFERENCES public.fato venda (sk_venda)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
