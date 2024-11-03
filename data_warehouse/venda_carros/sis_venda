@@ -1,0 +1,130 @@
+CREATE SEQUENCE fato_veiculo_sk_veiculo_seq;
+
+CREATE TABLE fato veiculo (
+                sk_veiculo INTEGER NOT NULL DEFAULT nextval('fato_veiculo_sk_veiculo_seq'),
+                cd_veiculo CHAR(30) NOT NULL,
+                nome_veiculo CHAR(30) NOT NULL,
+                modelo_veiculo CHAR(10) NOT NULL,
+                dt_ini_fabricacao DATE NOT NULL,
+                dt_fim_fabricacao DATE NOT NULL,
+                CONSTRAINT sk_veiculo PRIMARY KEY (sk_veiculo)
+);
+
+
+ALTER SEQUENCE fato_veiculo_sk_veiculo_seq OWNED BY fato veiculo.sk_veiculo;
+
+CREATE SEQUENCE transporte_sk_transporte_seq;
+
+CREATE TABLE transporte (
+                sk_transporte INTEGER NOT NULL DEFAULT nextval('transporte_sk_transporte_seq'),
+                cd_transporte CHAR(30) NOT NULL,
+                cd_transportadora CHAR(12) NOT NULL,
+                cd_loja CHAR(12) NOT NULL,
+                dt_transporte DATE NOT NULL,
+                vl_frete NUMERIC(15,2) NOT NULL,
+                sk_veiculo INTEGER NOT NULL,
+                CONSTRAINT sk_transporte PRIMARY KEY (sk_transporte)
+);
+
+
+ALTER SEQUENCE transporte_sk_transporte_seq OWNED BY transporte.sk_transporte;
+
+CREATE SEQUENCE trasnportadoras_fk_transportadoras_seq;
+
+CREATE TABLE trasnportadoras (
+                fk_transportadoras INTEGER NOT NULL DEFAULT nextval('trasnportadoras_fk_transportadoras_seq'),
+                cd_transportadoras CHAR(12) NOT NULL,
+                nm_transportadoras CHAR(30) NOT NULL,
+                cidade_transportadoras CHAR(30) NOT NULL,
+                estado_transportadora CHAR(2) NOT NULL,
+                pais_transportadores CHAR(20) NOT NULL,
+                sk_veiculo INTEGER NOT NULL,
+                CONSTRAINT fk_transportadoras PRIMARY KEY (fk_transportadoras)
+);
+
+
+ALTER SEQUENCE trasnportadoras_fk_transportadoras_seq OWNED BY trasnportadoras.fk_transportadoras;
+
+CREATE SEQUENCE loja_sk_loja_seq;
+
+CREATE TABLE loja (
+                sk_loja INTEGER NOT NULL DEFAULT nextval('loja_sk_loja_seq'),
+                cd_loja CHAR(12) NOT NULL,
+                endereco_loja CHAR(100) NOT NULL,
+                cidade_loja CHAR(30) NOT NULL,
+                estado_loja CHAR(2) NOT NULL,
+                pais_loja CHAR(20) NOT NULL,
+                sk_veiculo INTEGER NOT NULL,
+                CONSTRAINT sk_loja PRIMARY KEY (sk_loja)
+);
+
+
+ALTER SEQUENCE loja_sk_loja_seq OWNED BY loja.sk_loja;
+
+CREATE SEQUENCE fornecimento_sk_fornecimento_seq;
+
+CREATE TABLE fornecimento (
+                sk_fornecimento INTEGER NOT NULL DEFAULT nextval('fornecimento_sk_fornecimento_seq'),
+                cd_fornecimento CHAR(30) NOT NULL,
+                cd_loja CHAR(12) NOT NULL,
+                data_compra DATE NOT NULL,
+                valor_compra NUMERIC(12,2) NOT NULL,
+                valor_imposto NUMERIC(12,2) NOT NULL,
+                sk_veiculo INTEGER NOT NULL,
+                CONSTRAINT sk_fornecimento PRIMARY KEY (sk_fornecimento)
+);
+
+
+ALTER SEQUENCE fornecimento_sk_fornecimento_seq OWNED BY fornecimento.sk_fornecimento;
+
+CREATE SEQUENCE fornecedor_sk_fornecedor_seq;
+
+CREATE TABLE fornecedor (
+                sk_fornecedor INTEGER NOT NULL DEFAULT nextval('fornecedor_sk_fornecedor_seq'),
+                cd_fornecedor CHAR(12) NOT NULL,
+                nm_fornecedor CHAR(30) NOT NULL,
+                endereco_fornecedor CHAR(100) NOT NULL,
+                cidade_fornecedor CHAR(30) NOT NULL,
+                estado_fornecedor CHAR(2) NOT NULL,
+                pais_fornecedor CHAR(20) NOT NULL,
+                sk_veiculo INTEGER NOT NULL,
+                CONSTRAINT sk_fornecedor PRIMARY KEY (sk_fornecedor)
+);
+
+
+ALTER SEQUENCE fornecedor_sk_fornecedor_seq OWNED BY fornecedor.sk_fornecedor;
+
+ALTER TABLE trasnportadoras ADD CONSTRAINT veiculo_trasnportadoras_fk
+FOREIGN KEY (sk_veiculo)
+REFERENCES fato veiculo (sk_veiculo)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE fornecimento ADD CONSTRAINT veiculo_fornecimento_fk
+FOREIGN KEY (sk_veiculo)
+REFERENCES fato veiculo (sk_veiculo)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE fornecedor ADD CONSTRAINT veiculo_fornecedor_fk
+FOREIGN KEY (sk_veiculo)
+REFERENCES fato veiculo (sk_veiculo)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE loja ADD CONSTRAINT veiculo_loja_fk
+FOREIGN KEY (sk_veiculo)
+REFERENCES fato veiculo (sk_veiculo)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE transporte ADD CONSTRAINT veiculo_transporte_fk
+FOREIGN KEY (sk_veiculo)
+REFERENCES fato veiculo (sk_veiculo)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
