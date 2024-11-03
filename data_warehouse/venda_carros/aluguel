@@ -1,0 +1,91 @@
+
+CREATE SEQUENCE public.aluguel_sk_aluguek_seq;
+
+CREATE TABLE public.aluguel (
+                sk_aluguek INTEGER NOT NULL DEFAULT nextval('public.aluguel_sk_aluguek_seq'),
+                cd_aluguel CHAR(30) NOT NULL,
+                cd_loja CHAR(12) NOT NULL,
+                cpf CHAR(12) NOT NULL,
+                data_compra DATE NOT NULL,
+                hora_aluguel DATE NOT NULL,
+                data_retorno DATE NOT NULL,
+                hora_retorno DATE NOT NULL,
+                valor_diaria NUMERIC(15,2) NOT NULL,
+                vl_compra NUMERIC(15,2) NOT NULL,
+                vl_imposto_icms NUMERIC(15,2) NOT NULL,
+                CONSTRAINT sk_aluguel PRIMARY KEY (sk_aluguek)
+);
+
+
+ALTER SEQUENCE public.aluguel_sk_aluguek_seq OWNED BY public.aluguel.sk_aluguek;
+
+CREATE SEQUENCE public.loja_sk_loja_seq;
+
+CREATE TABLE public.loja (
+                sk_loja INTEGER NOT NULL DEFAULT nextval('public.loja_sk_loja_seq'),
+                cd_loja CHAR(12) NOT NULL,
+                endereco CHAR(100) NOT NULL,
+                cidade CHAR(30) NOT NULL,
+                estado CHAR(2) NOT NULL,
+                pais CHAR(20) NOT NULL,
+                sk_aluguek INTEGER NOT NULL,
+                CONSTRAINT sk_loja PRIMARY KEY (sk_loja)
+);
+
+
+ALTER SEQUENCE public.loja_sk_loja_seq OWNED BY public.loja.sk_loja;
+
+CREATE SEQUENCE public.cliente_sk_cliente_seq;
+
+CREATE TABLE public.cliente (
+                sk_cliente INTEGER NOT NULL DEFAULT nextval('public.cliente_sk_cliente_seq'),
+                cpf CHAR(12) NOT NULL,
+                nome CHAR(30) NOT NULL,
+                endereco CHAR(100) NOT NULL,
+                cidade CHAR(30) NOT NULL,
+                bairro CHAR(10) NOT NULL,
+                estado CHAR(2) NOT NULL,
+                pais CHAR(20) NOT NULL,
+                renda NUMERIC(15,2) NOT NULL,
+                sk_aluguek INTEGER NOT NULL,
+                CONSTRAINT sk_cliente PRIMARY KEY (sk_cliente)
+);
+
+
+ALTER SEQUENCE public.cliente_sk_cliente_seq OWNED BY public.cliente.sk_cliente;
+
+CREATE SEQUENCE public.veiculo_sk_veiculo_seq;
+
+CREATE TABLE public.veiculo (
+                sk_veiculo INTEGER NOT NULL DEFAULT nextval('public.veiculo_sk_veiculo_seq'),
+                cd_veiculo CHAR(30) NOT NULL,
+                nome CHAR(30) NOT NULL,
+                modelo CHAR(10) NOT NULL,
+                ano_fabricacao NUMERIC(4) NOT NULL,
+                sk_aluguek INTEGER NOT NULL,
+                CONSTRAINT sk_veiculo PRIMARY KEY (sk_veiculo)
+);
+
+
+ALTER SEQUENCE public.veiculo_sk_veiculo_seq OWNED BY public.veiculo.sk_veiculo;
+
+ALTER TABLE public.cliente ADD CONSTRAINT aluguel_cliente_fk
+FOREIGN KEY (sk_aluguek)
+REFERENCES public.aluguel (sk_aluguek)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE public.veiculo ADD CONSTRAINT aluguel_veiculo_fk
+FOREIGN KEY (sk_aluguek)
+REFERENCES public.aluguel (sk_aluguek)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE public.loja ADD CONSTRAINT aluguel_loja_fk
+FOREIGN KEY (sk_aluguek)
+REFERENCES public.aluguel (sk_aluguek)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
