@@ -1,0 +1,158 @@
+-- criação das tabelas
+
+CREATE SEQUENCE public.dim_cliente_sk_cliente_seq;
+
+CREATE TABLE public.dim_cliente (
+                sk_cliente INTEGER NOT NULL DEFAULT nextval('public.dim_cliente_sk_cliente_seq'),
+                cliente_id VARCHAR NOT NULL,
+                nome VARCHAR NOT NULL,
+                endereco VARCHAR NOT NULL,
+                cidade VARCHAR NOT NULL,
+                estado VARCHAR NOT NULL,
+                data_ini DATE NOT NULL,
+                data_fim DATE NOT NULL,
+                situacao BOOLEAN NOT NULL,
+                CONSTRAINT cliente_sk PRIMARY KEY (sk_cliente)
+);
+
+
+ALTER SEQUENCE public.dim_cliente_sk_cliente_seq OWNED BY public.dim_cliente.sk_cliente;
+
+CREATE SEQUENCE public.entragas1_fato_entregas1_sk_seq;
+
+CREATE SEQUENCE public.entragas1_fato_entrega1_id_seq;
+
+CREATE TABLE public.entragas1_fato (
+                entregas1_sk INTEGER NOT NULL DEFAULT nextval('public.entragas1_fato_entregas1_sk_seq'),
+                entrega1_id INTEGER NOT NULL DEFAULT nextval('public.entragas1_fato_entrega1_id_seq'),
+                pedido_id VARCHAR NOT NULL,
+                id_data_saida INTEGER NOT NULL,
+                id_data_chegada INTEGER NOT NULL,
+                id_dt_pedido INTEGER NOT NULL,
+                quilometragem INTEGER NOT NULL,
+                centro_saida_id VARCHAR NOT NULL,
+                centro_destino_id VARCHAR NOT NULL,
+                quantidade INTEGER NOT NULL,
+                valor_total INTEGER NOT NULL,
+                sk_cliente INTEGER NOT NULL,
+                CONSTRAINT entregas1_fato_sk PRIMARY KEY (entregas1_sk)
+);
+
+
+ALTER SEQUENCE public.entragas1_fato_entregas1_sk_seq OWNED BY public.entragas1_fato.entregas1_sk;
+
+ALTER SEQUENCE public.entragas1_fato_entrega1_id_seq OWNED BY public.entragas1_fato.entrega1_id;
+
+CREATE SEQUENCE public.dim_tempo_tempo_sk_seq;
+
+CREATE TABLE public.dim_tempo (
+                tempo_sk INTEGER NOT NULL DEFAULT nextval('public.dim_tempo_tempo_sk_seq'),
+                data DATE NOT NULL,
+                CONSTRAINT tempo_sk PRIMARY KEY (tempo_sk)
+);
+
+
+ALTER SEQUENCE public.dim_tempo_tempo_sk_seq OWNED BY public.dim_tempo.tempo_sk;
+
+CREATE SEQUENCE public.dim_centro_cd_sk_seq;
+
+CREATE SEQUENCE public.dim_centro_centro_id_seq;
+
+CREATE TABLE public.dim_centro (
+                cd_sk INTEGER NOT NULL DEFAULT nextval('public.dim_centro_cd_sk_seq'),
+                centro_id INTEGER NOT NULL DEFAULT nextval('public.dim_centro_centro_id_seq'),
+                nome VARCHAR(255) NOT NULL,
+                endereco VARCHAR(255) NOT NULL,
+                cidade VARCHAR(255) NOT NULL,
+                estado VARCHAR(255) NOT NULL,
+                entregas1_sk INTEGER NOT NULL,
+                ativo BOOLEAN NOT NULL,
+                CONSTRAINT centro_sk PRIMARY KEY (cd_sk)
+);
+
+
+-- inserção dos dados
+-- Inserindo dados na tabela dim_cliente
+INSERT INTO public.dim_cliente (cliente_id, nome, endereco, cidade, estado, data_ini, data_fim, situacao) VALUES
+('C001', 'João Silva', 'Rua A, 123', 'São Paulo', 'SP', '2023-01-01', '2024-01-01', TRUE),
+('C002', 'Maria Oliveira', 'Rua B, 456', 'Rio de Janeiro', 'RJ', '2022-06-15', '2023-06-15', TRUE),
+('C003', 'Carlos Santos', 'Rua C, 789', 'Belo Horizonte', 'MG', '2021-03-20', '2022-03-20', FALSE),
+('C004', 'Ana Costa', 'Av. D, 101', 'Salvador', 'BA', '2023-05-10', '2024-05-10', TRUE),
+('C005', 'Roberto Lima', 'Rua E, 202', 'Curitiba', 'PR', '2020-11-01', '2021-11-01', FALSE),
+('C006', 'Fernanda Souza', 'Rua F, 303', 'Fortaleza', 'CE', '2023-07-22', '2024-07-22', TRUE),
+('C007', 'Paulo Mendes', 'Rua G, 404', 'Manaus', 'AM', '2022-08-13', '2023-08-13', TRUE),
+('C008', 'Luciana Andrade', 'Av. H, 505', 'Recife', 'PE', '2021-09-25', '2022-09-25', FALSE),
+('C009', 'Rafael Ferreira', 'Rua I, 606', 'Porto Alegre', 'RS', '2023-04-17', '2024-04-17', TRUE),
+('C010', 'Aline Barbosa', 'Rua J, 707', 'Brasília', 'DF', '2020-12-31', '2021-12-31', FALSE);
+
+-- Inserindo dados na tabela entragas1_fato
+INSERT INTO public.entragas1_fato (pedido_id, id_data_saida, id_data_chegada, id_dt_pedido, quilometragem, centro_saida_id, centro_destino_id, quantidade, valor_total, sk_cliente) VALUES
+('P001', 1, 2, 1, 500, 'CS01', 'CD01', 10, 1500, 1),
+('P002', 2, 3, 2, 300, 'CS02', 'CD02', 20, 2000, 2),
+('P003', 3, 4, 3, 800, 'CS03', 'CD03', 15, 1800, 3),
+('P004', 4, 5, 4, 200, 'CS04', 'CD04', 12, 1200, 4),
+('P005', 5, 6, 5, 700, 'CS05', 'CD05', 25, 2500, 5),
+('P006', 6, 7, 6, 450, 'CS06', 'CD06', 18, 1800, 6),
+('P007', 7, 8, 7, 600, 'CS07', 'CD07', 22, 2200, 7),
+('P008', 8, 9, 8, 400, 'CS08', 'CD08', 14, 1400, 8),
+('P009', 9, 10, 9, 550, 'CS09', 'CD09', 30, 3000, 9),
+('P010', 10, 11, 10, 250, 'CS10', 'CD10', 16, 1600, 10);
+
+-- Inserindo dados na tabela dim_tempo
+INSERT INTO public.dim_tempo (data) VALUES
+('2023-01-01'),
+('2023-02-01'),
+('2023-03-01'),
+('2023-04-01'),
+('2023-05-01'),
+('2023-06-01'),
+('2023-07-01'),
+('2023-08-01'),
+('2023-09-01'),
+('2023-10-01');
+
+-- Inserindo dados na tabela dim_centro
+INSERT INTO public.dim_centro (nome, endereco, cidade, estado, entregas1_sk, ativo) VALUES
+('Centro A', 'Av. 1, 100', 'São Paulo', 'SP', 1, TRUE),
+('Centro B', 'Av. 2, 200', 'Rio de Janeiro', 'RJ', 2, TRUE),
+('Centro C', 'Av. 3, 300', 'Belo Horizonte', 'MG', 3, FALSE),
+('Centro D', 'Av. 4, 400', 'Salvador', 'BA', 4, TRUE),
+('Centro E', 'Av. 5, 500', 'Curitiba', 'PR', 5, FALSE),
+('Centro F', 'Av. 6, 600', 'Fortaleza', 'CE', 6, TRUE),
+('Centro G', 'Av. 7, 700', 'Manaus', 'AM', 7, TRUE),
+('Centro H', 'Av. 8, 800', 'Recife', 'PE', 8, FALSE),
+('Centro I', 'Av. 9, 900', 'Porto Alegre', 'RS', 9, TRUE),
+('Centro J', 'Av. 10, 1000', 'Brasília', 'DF', 10, FALSE);
+
+-- Métricas aditivas
+-- quantidade de produtos entregues
+select sum(quantidade) from entragas1_fato;
+
+-- tempo total de entrega
+SELECT 
+    e.pedido_id,
+    (t_chegada.data - t_saida.data) AS "tempo total de entrega"
+FROM 
+    public.entragas1_fato e
+JOIN 
+    public.dim_tempo t_saida ON e.id_data_saida = t_saida.tempo_sk
+JOIN 
+    public.dim_tempo t_chegada ON e.id_data_chegada = t_chegada.tempo_sk;
+
+   
+-- Metricas não aditivas
+-- custo medio por km
+select sum(valor_total)/sum(quilometragem)
+from entragas1_fato;
+
+
+
+-- tempo medio de entrega
+SELECT 
+     avg(t_chegada.data - t_saida.data) AS "tempo total de entrega"
+FROM 
+    public.entragas1_fato e
+JOIN 
+    public.dim_tempo t_saida ON e.id_data_saida = t_saida.tempo_sk
+JOIN 
+    public.dim_tempo t_chegada ON e.id_data_chegada = t_chegada.tempo_sk;
