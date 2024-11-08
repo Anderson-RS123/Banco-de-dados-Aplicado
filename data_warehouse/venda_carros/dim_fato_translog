@@ -1,0 +1,117 @@
+
+CREATE SEQUENCE public.dim_cliente_sk_cliente_seq;
+
+CREATE TABLE public.dim_cliente (
+                sk_cliente INTEGER NOT NULL DEFAULT nextval('public.dim_cliente_sk_cliente_seq'),
+                cliente_id VARCHAR NOT NULL,
+                nome VARCHAR NOT NULL,
+                endereco VARCHAR NOT NULL,
+                cidade VARCHAR NOT NULL,
+                estado VARCHAR NOT NULL,
+                CONSTRAINT cliente_sk PRIMARY KEY (sk_cliente)
+);
+
+
+ALTER SEQUENCE public.dim_cliente_sk_cliente_seq OWNED BY public.dim_cliente.sk_cliente;
+
+CREATE SEQUENCE public.entragas1_fato_entregas1_sk_seq;
+
+CREATE SEQUENCE public.entragas1_fato_entrega1_id_seq;
+
+CREATE TABLE public.entragas1_fato (
+                entregas1_sk INTEGER NOT NULL DEFAULT nextval('public.entragas1_fato_entregas1_sk_seq'),
+                entrega1_id INTEGER NOT NULL DEFAULT nextval('public.entragas1_fato_entrega1_id_seq'),
+                pedido_id VARCHAR NOT NULL,
+                id_data_saida INTEGER NOT NULL,
+                id_data_chegada INTEGER NOT NULL,
+                id_dt_pedido INTEGER NOT NULL,
+                quilometragem INTEGER NOT NULL,
+                centro_saida_id VARCHAR NOT NULL,
+                centro_destino_id VARCHAR NOT NULL,
+                quantidade INTEGER NOT NULL,
+                valor_total INTEGER NOT NULL,
+                sk_cliente INTEGER NOT NULL,
+                CONSTRAINT entregas1_fato_sk PRIMARY KEY (entregas1_sk)
+);
+
+
+ALTER SEQUENCE public.entragas1_fato_entregas1_sk_seq OWNED BY public.entragas1_fato.entregas1_sk;
+
+ALTER SEQUENCE public.entragas1_fato_entrega1_id_seq OWNED BY public.entragas1_fato.entrega1_id;
+
+CREATE SEQUENCE public.dim_tempo_tempo_sk_seq;
+
+CREATE TABLE public.dim_tempo (
+                tempo_sk INTEGER NOT NULL DEFAULT nextval('public.dim_tempo_tempo_sk_seq'),
+                data DATE NOT NULL,
+                entregas1_sk INTEGER NOT NULL,
+                entregas1_fato_entregas1_sk INTEGER NOT NULL,
+                entregas1_fato_entregas1_sk_1 INTEGER NOT NULL,
+                CONSTRAINT tempo_sk PRIMARY KEY (tempo_sk)
+);
+
+
+ALTER SEQUENCE public.dim_tempo_tempo_sk_seq OWNED BY public.dim_tempo.tempo_sk;
+
+CREATE SEQUENCE public.dim_centro_cd_sk_seq;
+
+CREATE SEQUENCE public.dim_centro_centro_id_seq;
+
+CREATE TABLE public.dim_centro (
+                cd_sk INTEGER NOT NULL DEFAULT nextval('public.dim_centro_cd_sk_seq'),
+                centro_id INTEGER NOT NULL DEFAULT nextval('public.dim_centro_centro_id_seq'),
+                nome VARCHAR(255) NOT NULL,
+                endereco VARCHAR(255) NOT NULL,
+                cidade VARCHAR(255) NOT NULL,
+                estado VARCHAR(255) NOT NULL,
+                entregas1_sk INTEGER NOT NULL,
+                entregas1_fato_entregas1_sk INTEGER NOT NULL,
+                CONSTRAINT centro_sk PRIMARY KEY (cd_sk)
+);
+
+
+ALTER SEQUENCE public.dim_centro_cd_sk_seq OWNED BY public.dim_centro.cd_sk;
+
+ALTER SEQUENCE public.dim_centro_centro_id_seq OWNED BY public.dim_centro.centro_id;
+
+ALTER TABLE public.entragas1_fato ADD CONSTRAINT cliente_entragas1_fato_fk
+FOREIGN KEY (sk_cliente)
+REFERENCES public.dim_cliente (sk_cliente)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE public.dim_centro ADD CONSTRAINT entragas1_fato_centro_fk
+FOREIGN KEY (entregas1_sk)
+REFERENCES public.entragas1_fato (entregas1_sk)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE public.dim_centro ADD CONSTRAINT entragas1_fato_centro_fk1
+FOREIGN KEY (entregas1_fato_entregas1_sk)
+REFERENCES public.entragas1_fato (entregas1_sk)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE public.dim_tempo ADD CONSTRAINT entragas1_fato_tempo_fk
+FOREIGN KEY (entregas1_sk)
+REFERENCES public.entragas1_fato (entregas1_sk)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE public.dim_tempo ADD CONSTRAINT entragas1_fato_tempo_fk1
+FOREIGN KEY (entregas1_fato_entregas1_sk)
+REFERENCES public.entragas1_fato (entregas1_sk)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
+
+ALTER TABLE public.dim_tempo ADD CONSTRAINT entragas1_fato_tempo_fk2
+FOREIGN KEY (entregas1_fato_entregas1_sk_1)
+REFERENCES public.entragas1_fato (entregas1_sk)
+ON DELETE NO ACTION
+ON UPDATE NO ACTION
+NOT DEFERRABLE;
