@@ -1,0 +1,208 @@
+-- Criar a tabela de datas (dim_data)
+CREATE TABLE public.origem_data (
+    id_data serial primary key,
+    data DATE NOT NULL
+);
+
+-- Criar tabelas de origem
+CREATE TABLE public.origem_clientes (
+    id_cliente integer primary key,
+    cpf VARCHAR NOT NULL,
+    nome VARCHAR NOT NULL,
+    endereco VARCHAR NOT NULL,
+    cidade VARCHAR NOT NULL,
+    estado VARCHAR NOT NULL,
+    renda NUMERIC(10, 2) NOT null
+);
+
+CREATE TABLE public.origem_veiculos (
+    id_veiculo serial primary key,
+    chassi VARCHAR NOT NULL,
+    nome VARCHAR NOT NULL,
+    modelo VARCHAR NOT NULL,
+    dt_inicio_fabricacao integer NOT null,
+    dt_fim_fabricacao integer not null,
+    fabricante VARCHAR NOT NULL,
+    categoria VARCHAR NOT NULL,
+    valor NUMERIC(15, 2) NOT null,
+    foreign key (dt_inicio_fabricacao) references public.origem_data(id_data),
+    foreign key (dt_fim_fabricacao) references public.origem_data(id_data)
+);
+
+CREATE TABLE public.origem_lojas (
+    id_loja serial PRIMARY KEY,
+    endereco VARCHAR NOT NULL,
+    cidade VARCHAR NOT NULL,
+    estado VARCHAR NOT NULL,
+    nome_loja VARCHAR NOT NULL,
+    gerente VARCHAR NOT NULL
+);
+
+CREATE TABLE public.origem_vendas (
+    id_venda integer PRIMARY KEY,
+    id_cliente INTEGER NOT NULL,
+    id_veiculo INTEGER NOT NULL,
+    id_loja INTEGER NOT NULL,
+    data_venda integer NOT NULL,
+    valor NUMERIC(10, 2) NOT NULL,
+    quantidade INTEGER NOT NULL,
+    desconto NUMERIC(5, 2) NOT NULL DEFAULT 0,
+	foreign key (data_venda) references public.origem_data(id_data)
+);
+
+
+-- Inserir algumas datas na tabela de data
+INSERT INTO public.origem_data (data) VALUES
+    ('2024-01-01'),
+    ('2024-02-01'),
+    ('2024-03-01'),
+    ('2024-04-01'),
+    ('2024-05-01');
+
+-- Inserir clientes
+INSERT INTO public.origem_clientes (id_cliente, cpf, nome, endereco, cidade, estado, renda) VALUES
+    (1, '12345678901', 'Carlos Silva', 'Rua A, 123', 'São Paulo', 'SP', 2500.00),
+    (2, '23456789012', 'Maria Oliveira', 'Rua B, 456', 'Rio de Janeiro', 'RJ', 3200.00),
+    (3, '34567890123', 'João Santos', 'Rua C, 789', 'Belo Horizonte', 'MG', 4500.00);
+
+-- Inserir veículos
+INSERT INTO public.origem_veiculos (id_veiculo, chassi, nome, modelo, dt_inicio_fabricacao, dt_fim_fabricacao, fabricante, categoria, valor) VALUES
+    (1, '9BWZZZ377VT004251', 'Fusca', 'Fusca 1500', 1, 2, 'Volkswagen', 'Popular', 15000.00),
+    (2, '9BWZZZ377VT004252', 'Gol', 'Gol G5', 1, 2, 'Volkswagen', 'Hatch', 25000.00),
+    (3, '9BWZZZ377VT004253', 'Civic', 'Civic 2.0', 2, 2, 'Honda', 'Sedan', 90000.00);
+
+-- Inserir lojas
+INSERT INTO public.origem_lojas (id_loja, endereco, cidade, estado, nome_loja, gerente) VALUES
+    (1, 'Av. Paulista, 1000', 'São Paulo', 'SP', 'Loja Central', 'Fernando Almeida'),
+    (2, 'Rua da Consolação, 200', 'São Paulo', 'SP', 'Loja Vila Mariana', 'Juliana Costa'),
+    (3, 'Rua Rio Branco, 350', 'Rio de Janeiro', 'RJ', 'Loja Copacabana', 'Roberta Souza');
+
+-- Inserir vendas
+INSERT INTO public.origem_vendas (id_venda, id_cliente, id_veiculo, id_loja, data_venda, valor, quantidade, desconto) VALUES
+    (1, 1, 1, 1, 1, 15000.00, 1, 0),
+    (2, 2, 2, 2, 2, 25000.00, 1, 5),
+    (3, 3, 3, 3, 3, 90000.00, 1, 10);
+	   
+	
+   
+   
+   
+   
+-- criação do data warehouse
+	CREATE TABLE public.dim_tempo (
+	                id_tempo INTEGER primary key,
+	                data DATE NOT NULL
+	);
+	
+	
+	
+	CREATE TABLE public.dim_loja (
+	                id_loja INTEGER primary key,
+	                endereco VARCHAR NOT NULL,
+	                cidade VARCHAR NOT NULL,
+	                estado VARCHAR NOT NULL
+	);
+	
+	
+	CREATE TABLE public.dim_veiculo (
+	                id_veiculo INTEGER primary key,
+	                chassi VARCHAR NOT NULL,
+	                nome VARCHAR NOT NULL,
+	                modelo VARCHAR NOT NULL,
+	                dt_inicio_fabricacao DATE NOT NULL,
+	                dt_fim_fabricacao DATE NOT NULL,
+	                fabricante VARCHAR NOT NULL
+	);
+	
+	
+	
+	
+	CREATE TABLE public.dim_cliente (
+	                id_cliente INTEGER primary key,
+	                cpf VARCHAR NOT NULL,
+	                nome VARCHAR NOT NULL,
+	                endereco VARCHAR NOT NULL,
+	                cidade VARCHAR NOT NULL,
+	                estado VARCHAR NOT NULL,
+	                renda NUMERIC(10, 2) NOT NULL
+	);
+	
+	
+	
+	CREATE TABLE public.fato_vendas (
+	                id_tempo INTEGER NOT NULL,
+	                id_cliente INTEGER NOT NULL,
+	                id_veiculo INTEGER NOT NULL,
+	                id_loja INTEGER NOT NULL,
+	                valor NUMERIC(10, 2) NOT NULL
+	);
+
+
+
+
+-- Inserir dados na tabela dim_tempo (equivalente a origem_data)
+INSERT INTO public.dim_tempo (id_tempo, data) 
+SELECT id_data, data FROM public.origem_data;
+
+-- Inserir dados na tabela dim_loja (equivalente a origem_lojas)
+INSERT INTO public.dim_loja (id_loja, endereco, cidade, estado)
+SELECT id_loja, endereco, cidade, estado FROM public.origem_lojas;
+
+-- Inserir dados na tabela dim_veiculo (equivalente a origem_veiculos)
+INSERT INTO public.dim_veiculo (id_veiculo, chassi, nome, modelo, dt_inicio_fabricacao, dt_fim_fabricacao, fabricante)
+SELECT id_veiculo, chassi, nome, modelo, 
+       (SELECT data FROM public.origem_data WHERE id_data = dt_inicio_fabricacao) AS dt_inicio_fabricacao,
+       (SELECT data FROM public.origem_data WHERE id_data = dt_fim_fabricacao) AS dt_fim_fabricacao, 
+       fabricante
+FROM public.origem_veiculos;
+
+-- Inserir dados na tabela dim_cliente (equivalente a origem_clientes)
+INSERT INTO public.dim_cliente (id_cliente, cpf, nome, endereco, cidade, estado, renda)
+SELECT id_cliente, cpf, nome, endereco, cidade, estado, renda FROM public.origem_clientes;
+
+-- Inserir dados na tabela fato_vendas (equivalente a origem_vendas)
+INSERT INTO public.fato_vendas (id_tempo, id_cliente, id_veiculo, id_loja, valor)
+SELECT v.data_venda, v.id_cliente, v.id_veiculo, v.id_loja, v.valor 
+FROM public.origem_vendas v
+JOIN public.origem_data d ON v.data_venda = d.id_data;
+
+
+
+
+
+-- Perguntas a serem respondidas
+-- 1.Total das vendas de uma determinada loja, num determinado período.
+select count(valor) as "Total de vendas"
+from fato_vendas fv 
+left join dim_tempo dt on fv.id_tempo = dt.id_tempo 
+where fv.id_loja = 2 and (dt.data > '2023/02/04' and dt.data < '2024/11/09');
+
+-- 2.Lojas que mais venderam num determinado período de tempo.
+select count(valor) as "Total de vendas", fv.id_loja as "codigo loja"
+from fato_vendas fv 
+left join dim_tempo dt on fv.id_tempo = dt.id_tempo 
+where dt.data > '2023/02/04' and dt.data < '2024/11/09'
+group by "codigo loja"
+order by "Total de vendas" desc;
+
+-- 3.Lojas que menos venderam num determinado período de tempo.
+select count(valor) as "Total de vendas", fv.id_loja as "codigo loja"
+from fato_vendas fv 
+left join dim_tempo dt on fv.id_tempo = dt.id_tempo 
+where dt.data > '2023/02/04' and dt.data < '2024/11/09'
+group by "codigo loja"
+order by "Total de vendas" asc;
+
+-- 4.Perfil de clientes que devem-se investir.
+select renda as "Renda"
+from fato_vendas fv
+left join dim_cliente dc on fv.id_cliente = dc.id_cliente
+where valor > 50000;
+
+--5.Veículos de maior aceitação numa determinada região
+select dv.nome, dv.modelo, count(nome)
+from fato_vendas fv
+left join dim_veiculo dv on fv.id_veiculo = dv.id_veiculo
+left join dim_loja dl on fv.id_loja = dl.id_loja
+where dl.estado = 'SP'
+group by dv.nome, dv.modelo;
