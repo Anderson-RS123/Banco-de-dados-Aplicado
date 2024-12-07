@@ -1,0 +1,278 @@
+-- ------------- Criação das tabelas do DW -------------
+
+-- Tabela Dimensão: Pacientes
+CREATE TABLE dim_pacients3 (
+    pacients_id SERIAL PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    date_of_birth DATE NOT NULL,
+    gender VARCHAR NOT NULL,
+    address VARCHAR NOT NULL,
+    smoker BOOLEAN NOT NULL,
+    registration_date DATE NOT NULL
+);
+
+-- Tabela Dimensão: Datas
+CREATE TABLE dim_data3 (
+    data_fk DATE NOT NULL PRIMARY KEY
+);
+
+-- Tabela Dimensão: Registros Médicos
+CREATE TABLE dim_Medical_Records3 (
+    record_id SERIAL PRIMARY KEY,
+    severity INTEGER NOT NULL,
+    outcome BOOLEAN NOT NULL
+);
+
+-- Tabela Dimensão: Tratamentos
+CREATE TABLE dim_Treatments3 (
+    treatment_id SERIAL PRIMARY KEY,
+    treatment_type VARCHAR NOT NULL,
+    custo NUMERIC NOT NULL,
+    active BOOLEAN NOT NULL
+);
+
+-- Tabela Dimensão: Diagnósticos
+CREATE TABLE dim_diagnoses3 (
+    diagnoses_id SERIAL PRIMARY KEY,
+    diagnosis_name VARCHAR NOT NULL,
+    risk_factor VARCHAR NOT NULL
+);
+
+-- Tabela Dimensão: Médicos
+CREATE TABLE dim_doctors3 (
+    doctor_id SERIAL PRIMARY KEY,
+    doctor_name VARCHAR NOT NULL
+);
+
+-- Tabela Fato: Registros de Saúde
+CREATE TABLE Fact_HealthRecords3 (
+    atendimento_sk SERIAL PRIMARY KEY,
+    doctor_id INTEGER NOT NULL REFERENCES dim_doctors2(doctor_id),
+    diagnoses_id INTEGER NOT NULL REFERENCES dim_diagnoses2(diagnoses_id),
+    pacients_id INTEGER NOT NULL REFERENCES dim_pacients2(pacients_id),
+    record_id INTEGER NOT NULL REFERENCES dim_Medical_Records2(record_id),
+    treatment_id INTEGER NOT NULL REFERENCES dim_Treatments2(treatment_id)
+);
+
+-- ----------- Transferência de Dados para as Dimensões -----------
+
+-- Inserindo dados na tabela dim_pacients
+INSERT INTO dim_pacients3 (name, date_of_birth, gender, address, smoker, registration_date)
+SELECT  
+    name, 
+    date_of_birth, 
+    gender, 
+    address, 
+    smoker, 
+    registration_date
+FROM Patients;
+
+-- Inserindo dados na tabela dim_data
+INSERT INTO dim_data3 (data_fk)
+SELECT DISTINCT visit_date
+FROM Medical_Records;
+
+-- Inserindo dados na tabela dim_Medical_Records
+INSERT INTO dim_Medical_Records3 (severity, outcome)
+SELECT 
+    severity, 
+    outcome
+FROM Medical_Records;
+
+-- Inserindo dados na tabela dim_Treatments
+INSERT INTO dim_Treatments3 (treatment_type, custo, active)
+SELECT 
+    treatment_type, 
+    cost, 
+    active
+FROM Treatments;
+
+-- Inserindo dados na tabela dim_diagnoses
+INSERT INTO dim_diagnoses3 (diagnosis_name, risk_factor)
+SELECT 
+    diagnosis_name, 
+    risk_factor
+FROM Diagnoses;
+
+-- Inserindo dados na tabela dim_doctors
+INSERT INTO dim_doctors3 (doctor_name)
+SELECT 
+    name
+FROM Doctors;
+
+
+------------------       Criação das tabelas de origem        ---------------
+-- Criação das Tabelas
+-- Tabela: Pacientes
+CREATE TABLE Patients2 (
+    patient_id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    date_of_birth DATE,
+    gender VARCHAR(10),
+    address VARCHAR(150),
+    smoker BOOLEAN,
+    contact_number VARCHAR(15),
+    registration_date DATE
+);
+
+-- Tabela: Registros Médicos
+CREATE TABLE Medical_Records2 (
+    record_id SERIAL PRIMARY KEY,
+    patient_id INT,
+    diagnosis_code VARCHAR(10),
+    treatment_id INT,
+    doctor_id INT,
+    visit_date DATE,
+    severity INT, -- 1 = leve, 2 = grave
+    outcome BOOLEAN, -- TRUE = sucesso, FALSE = falha
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id)
+);
+
+-- Tabela: Tratamentos
+CREATE TABLE Treatments2 (
+    treatment_id SERIAL PRIMARY KEY,
+    treatment_type VARCHAR(100),
+    cost FLOAT,
+    active BOOLEAN
+);
+
+-- Tabela: Médicos
+CREATE TABLE Doctors2 (
+    doctor_id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    specialty VARCHAR(50),
+    years_of_experience INT,
+    current_hospital VARCHAR(100)
+);
+
+-- Tabela: Diagnósticos
+CREATE TABLE Diagnoses2 (
+    diagnosis_code VARCHAR(10) PRIMARY KEY,
+    diagnosis_name VARCHAR(100),
+    risk_factor VARCHAR(100)
+);
+
+-- Inserção de Dados nas Tabelas
+-- Populando Pacientes
+INSERT INTO Patients2 (name, date_of_birth, gender, address, smoker, contact_number, registration_date)
+SELECT 
+    CONCAT('Paciente_', i)::TEXT AS name,
+    TO_DATE('19' || LPAD((60 + i)::TEXT, 2, '0') || '-01-01', 'YYYY-MM-DD') AS date_of_birth,
+    CASE WHEN i % 2 = 0 THEN 'Male' ELSE 'Female' END AS gender,
+    CONCAT('Rua ', i, ', Bairro ', i)::TEXT AS address,
+    CASE WHEN i % 3 = 0 THEN TRUE ELSE FALSE END AS smoker,
+    CONCAT('(11) 9', LPAD(i::TEXT, 4, '0'), '-', LPAD(i::TEXT, 4, '0'))::TEXT AS contact_number,
+    '2023-01-01'::DATE AS registration_date
+FROM generate_series(1, 50) AS s(i);
+
+
+-- Populando Diagnósticos
+INSERT INTO Diagnoses2 (diagnosis_code, diagnosis_name, risk_factor)
+VALUES 
+('D01', 'Diabetes', 'Obesidade'),
+('D02', 'Hipertensão', 'Fumante'),
+('D03', 'Doença Cardíaca', 'Colesterol Elevado'),
+('D04', 'Asma', 'Histórico Familiar'),
+('D05', 'Câncer de Pulmão', 'Fumante');
+
+-- Populando Tratamentos
+INSERT INTO Treatments2 (treatment_type, cost, active)
+SELECT 
+    CONCAT('Tratamento_', i),
+    i * 100.0,
+    CASE WHEN i % 2 = 0 THEN TRUE ELSE FALSE END
+FROM generate_series(1, 50) AS i;
+
+-- Populando Médicos
+INSERT INTO Doctors2 (name, specialty, years_of_experience, current_hospital)
+SELECT 
+    CONCAT('Médico_', i),
+    CASE WHEN i % 3 = 0 THEN 'Cardiologia' 
+         WHEN i % 3 = 1 THEN 'Pneumologia' 
+         ELSE 'Clínico Geral' END,
+    i % 30,
+    CONCAT('Hospital_', i)
+FROM generate_series(1, 50) AS i;
+
+-- Populando Registros Médicos
+INSERT INTO Medical_Records2 (patient_id, diagnosis_code, treatment_id, doctor_id, visit_date, severity, outcome)
+SELECT 
+    (i % 50) + 1,
+    CASE WHEN i % 5 = 0 THEN 'D01'
+         WHEN i % 5 = 1 THEN 'D02'
+         WHEN i % 5 = 2 THEN 'D03'
+         WHEN i % 5 = 3 THEN 'D04'
+         ELSE 'D05' END,
+    (i % 50) + 1,
+    (i % 50) + 1,
+    '2023-01-01'::DATE + (i % 365),
+    (i % 2) + 1,
+    CASE WHEN i % 4 = 0 THEN TRUE ELSE FALSE END
+FROM generate_series(1, 50) AS i;
+
+
+
+
+
+-- Inserindo dados na tabela dim_pacients
+INSERT INTO dim_pacients3 (name, date_of_birth, gender, address, smoker, registration_date)
+SELECT  
+    name, 
+    date_of_birth, 
+    gender, 
+    address, 
+    smoker, 
+    registration_date
+FROM Patients2;
+
+-- Inserindo dados na tabela dim_data
+INSERT INTO dim_data3 (data_fk)
+SELECT DISTINCT visit_date
+FROM Medical_Records2;
+
+-- Inserindo dados na tabela dim_Medical_Records
+INSERT INTO dim_Medical_Records3 (severity, outcome)
+SELECT 
+    severity, 
+    outcome
+FROM Medical_Records2;
+
+-- Inserindo dados na tabela dim_Treatments
+INSERT INTO dim_Treatments3 (treatment_type, custo, active)
+SELECT 
+    treatment_type, 
+    cost, 
+    active
+FROM Treatments2;
+
+-- Inserindo dados na tabela dim_diagnoses
+INSERT INTO dim_diagnoses3 ( diagnosis_name, risk_factor)
+SELECT 
+    diagnosis_name, 
+    risk_factor
+FROM Diagnoses2;
+
+-- Inserindo dados na tabela dim_doctors
+INSERT INTO dim_doctors3 ( doctor_name)
+SELECT 
+    name
+FROM Doctors2;
+
+
+-- ----------- Transferência de Dados para a Tabela Fato -----------
+
+-- Inserindo dados na tabela fato (Fact_HealthRecords)
+INSERT INTO Fact_HealthRecords3 (doctor_id, diagnoses_id, pacients_id, record_id, treatment_id)
+SELECT 
+    doc2.doctor_id,              
+    diag2.diagnoses_id,                   
+    pac2.pacients_id,                    
+    med2.record_id,                        
+    treat2.treatment_id                  
+FROM Medical_Records2 m
+JOIN dim_diagnoses3 diag2  ON m.diagnosis_code = diag2.diagnosis_name
+JOIN dim_pacients3 pac2 ON m.patient_id = pac2.pacients_id
+JOIN dim_Treatments3 treat2 ON m.treatment_id = treat2.treatment_id
+JOIN dim_doctors3 doc2 ON m.doctor_id = doc2.doctor_id;
+-- ----------- Consultar tabela fato para validar a inserção -----------
+SELECT * FROM Fact_HealthRecords2;
